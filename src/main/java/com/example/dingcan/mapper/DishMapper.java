@@ -1,3 +1,5 @@
+// DishMapper.java
+
 package com.example.dingcan.mapper;
 
 import com.example.dingcan.pojo.Dish;
@@ -5,16 +7,14 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 public interface DishMapper {
-    /**
-     * 查询所有在售的菜品
-     * @return 菜品列表
-     */
     List<Dish> selectAllOnSale();
 
+    Dish findById(@Param("id") Integer id);
+
     /**
-     * 根据ID查询菜品
-     * @param id 菜品ID
-     * @return 菜品对象
+     * 【新增】根据菜品名称模糊搜索在售的菜品
+     * @param name 搜索关键词
+     * @return 匹配的菜品列表
      */
-    Dish findById(@Param("id") Integer id); // 新增的方法
+    List<Dish> selectOnSaleByNameContaining(@Param("name") String name);
 }

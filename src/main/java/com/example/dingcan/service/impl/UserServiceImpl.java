@@ -8,6 +8,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+// 【重要】确保这里没有 abstract 关键字
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -57,5 +58,33 @@ public class UserServiceImpl implements UserService {
         }
 
         return null; // 密码错误
+    }
+
+    /**
+     * 实现更新个人资料的逻辑
+     */
+    @Override
+    @Transactional
+    public User updateProfile(User userToUpdate) throws Exception {
+        // 为了安全起见，我们只允许更新部分字段，比如手机号。
+        // 创建一个新的User对象，只设置允许更新的字段，防止意外更新其他敏感信息。
+        User user = new User();
+        user.setId(userToUpdate.getId());
+        user.setPhone(userToUpdate.getPhone());
+        // 如果未来允许更新其他字段，在这里添加即可
+        // user.setXXX(userToUpdate.getXXX());
+
+        int rowsAffected = userMapper.update(user);
+
+        if (rowsAffected == 0) {
+            throw new Exception("用户信息更新失败，用户不存在或数据无变化");
+        }
+
+        // 从数据库重新获取最新的用户信息，以确保数据完整，但不包含密码
+        User updatedUser = userMapper.findByUsername(userToUpdate.getUsername());
+        if (updatedUser != null) {
+            updatedUser.setPassword(null);
+        }
+        return updatedUser;
     }
 }

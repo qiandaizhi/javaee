@@ -4,16 +4,13 @@ import com.example.dingcan.pojo.Dish;
 import java.util.List;
 
 public interface DishService {
-    /**
-     * 获取所有可供展示的菜品
-     * @return 菜品列表
-     */
     List<Dish> getAllDishesForDisplay();
+    Dish getDishById(Integer dishId);
 
     /**
-     * 根据ID获取菜品详情
-     * @param dishId 菜品ID
-     * @return 菜品对象
+     * 【新增】根据关键词搜索菜品
+     * @param keyword 搜索关键词
+     * @return 匹配的菜品列表
      */
-    Dish getDishById(Integer dishId); // 新增的方法
+    List<Dish> searchDishes(String keyword);
 }

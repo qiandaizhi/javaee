@@ -18,9 +18,20 @@ public class DishServiceImpl implements DishService {
         return dishMapper.selectAllOnSale();
     }
 
-    // 新增的方法实现
     @Override
     public Dish getDishById(Integer dishId) {
         return dishMapper.findById(dishId);
+    }
+
+    /**
+     * 【新增】实现搜索方法
+     */
+    @Override
+    public List<Dish> searchDishes(String keyword) {
+        // 如果关键词为空或只包含空白，则返回所有菜品
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return dishMapper.selectAllOnSale();
+        }
+        return dishMapper.selectOnSaleByNameContaining(keyword.trim());
     }
 }

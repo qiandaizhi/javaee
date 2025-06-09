@@ -20,4 +20,11 @@ public interface UserService {
      * @return 登录成功的用户对象（不含密码），如果失败则返回null
      */
     User login(String username, String password);
+    /**
+     * 【新增】更新用户个人资料
+     * @param userToUpdate 包含用户ID和新手机号的对象
+     * @return 更新后的用户信息对象
+     * @throws Exception 如果更新失败
+     */
+    User updateProfile(User userToUpdate) throws Exception;
 }

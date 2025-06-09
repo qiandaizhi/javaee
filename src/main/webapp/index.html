@@ -10,7 +10,7 @@
         :root { --primary-color: #f85737; --bg-color: #f4f5f7; --card-bg: #fff; --text-color: #333; --text-light: #888; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-color); margin: 0; color: var(--text-color); }
         .container { max-width: 1200px; margin: 20px auto; padding: 20px; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 20px; }
         .user-section { display: flex; gap: 10px; align-items: center; }
         .user-info { font-weight: bold; }
         button { cursor: pointer; padding: 8px 15px; border-radius: 6px; border: 1px solid #ccc; background-color: var(--card-bg); transition: all 0.2s; }
@@ -18,6 +18,20 @@
         button.primary { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
         button.primary:hover { background-color: #e04a2f; }
         button.outline { background-color: transparent; color: var(--primary-color); border-color: var(--primary-color); }
+
+        .search-section { display: flex; flex-grow: 1; max-width: 500px; }
+        .search-section input {
+            flex-grow: 1;
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            border-radius: 6px 0 0 6px;
+            outline: none;
+            font-size: 1rem;
+        }
+        .search-section button {
+            border-radius: 0 6px 6px 0;
+            border-left: none;
+        }
 
         .dish-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
         .dish-card { background-color: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; }
@@ -41,6 +55,11 @@
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input { width: calc(100% - 22px); padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
         .form-error { color: red; font-size: 0.9em; margin-top: 5px; min-height: 1.2em; }
+
+        .form-group input:read-only, .form-group input:disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+        }
 
         .order-card { border: 1px solid #eee; border-radius: 8px; margin-bottom: 15px; padding: 15px; }
         .order-header { display: flex; justify-content: space-between; font-size: 0.9em; color: var(--text-light); margin-bottom: 10px; }
@@ -69,9 +88,16 @@
 <div id="app" class="container">
     <header>
         <h1>线上订餐系统</h1>
+
+        <div class="search-section">
+            <input type="text" v-model="searchKeyword" @keyup.enter="performSearch" placeholder="搜索您感兴趣的菜品...">
+            <button @click="performSearch">搜索</button>
+        </div>
+
         <div class="user-section">
             <div v-if="currentUser" class="user-info">
                 欢迎, {{ currentUser.username }}
+                <button class="outline" @click="openProfileModal">个人中心</button>
                 <button class="outline" @click="openMyOrders">我的订单</button>
                 <button @click="logout">退出</button>
             </div>
@@ -82,7 +108,6 @@
         </div>
     </header>
 
-    <!-- 菜品列表 -->
     <div class="dish-grid">
         <div class="dish-card" v-for="dish in dishes" :key="dish.id">
             <img :src="dish.imageUrl" class="dish-image" :alt="dish.name" @error="e => e.target.src='https://placehold.co/300x200/cccccc/ffffff?text=Image+Not+Found'">
@@ -94,13 +119,11 @@
         </div>
     </div>
 
-    <!-- 浮动购物车按钮 -->
     <div class="cart-fab" @click="showCartModal = true">
         🛒
         <span v-if="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
     </div>
 
-    <!-- 登录模态框 -->
     <div v-if="showLoginModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -123,7 +146,6 @@
         </div>
     </div>
 
-    <!-- 注册模态框 -->
     <div v-if="showRegisterModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -141,7 +163,6 @@
         </div>
     </div>
 
-    <!-- 购物车和结算模态框 -->
     <div v-if="showCartModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -185,7 +206,6 @@
         </div>
     </div>
 
-    <!-- 我的订单 模态框 -->
     <div v-if="showMyOrdersModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -197,12 +217,10 @@
                 <div v-for="order in myOrders" :key="order.id" class="order-card">
                     <div class="order-header">
                         <span>订单号: {{ order.id }}</span>
-                        <!-- 防御性渲染 #1：检查createTime是否存在 -->
                         <span>下单时间: {{ order.createTime ? new Date(order.createTime).toLocaleString() : '未知' }}</span>
                     </div>
                     <div class="order-body">
                         <div class="order-dishes">
-                            <!-- 防御性渲染 #2：使用<template>包裹v-for，并检查orderItems是否存在 -->
                             <template v-if="order.orderItems && Array.isArray(order.orderItems)">
                                 <div v-for="item in order.orderItems" :key="item.id" class="order-dish-item" v-if="item && item.dish">
                                     <img :src="item.dish.imageUrl" @error="e => e.target.src='https://placehold.co/40x40/cccccc/ffffff?text=IMG'">
@@ -211,7 +229,6 @@
                             </template>
                         </div>
                         <div class="order-info">
-                            <!-- 防御性渲染 #3：检查totalPrice是否存在 -->
                             <div class="total">¥{{ order.totalPrice != null ? order.totalPrice.toFixed(2) : '0.00' }}</div>
                             <div class="status" :class="'status-' + order.status">{{ getStatusText(order.status) }}</div>
                         </div>
@@ -220,6 +237,39 @@
                         <button v-if="isCancellable(order.status)" @click="cancelOrder(order)">取消订单</button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="showProfileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>个人中心</h2>
+                <span class="modal-close" @click="closeProfileModal">&times;</span>
+            </div>
+            <div class="modal-body" v-if="currentUser">
+                <div class="form-group">
+                    <label>用户名:</label>
+                    <input :value="currentUser.username" type="text" readonly disabled>
+                </div>
+                <div class="form-group">
+                    <label>手机号:</label>
+                    <input v-model="profileForm.phone" type="text" :readonly="!isEditingProfile">
+                </div>
+                <div class="form-group">
+                    <label>注册时间:</label>
+                    <input :value="currentUser.createTime ? new Date(currentUser.createTime).toLocaleString() : ''" type="text" readonly disabled>
+                </div>
+                <div class="form-error">{{ profileError }}</div>
+            </div>
+            <div class="modal-footer">
+                <template v-if="isEditingProfile">
+                    <button @click="cancelEditProfile">取消</button>
+                    <button class="primary" @click="saveProfile">保存</button>
+                </template>
+                <template v-else>
+                    <button class="primary" @click="isEditingProfile = true">修改资料</button>
+                </template>
             </div>
         </div>
     </div>
@@ -238,7 +288,11 @@
             const showCartModal = ref(false);
             const showMyOrdersModal = ref(false);
             const myOrders = ref([]);
-
+            const searchKeyword = ref('');
+            const showProfileModal = ref(false);
+            const isEditingProfile = ref(false);
+            const profileForm = ref({ phone: '' });
+            const profileError = ref(null);
             const loginForm = ref({ username: '', password: '' });
             const registerForm = ref({ username: '', password: '', phone: '' });
             const authError = ref(null);
@@ -247,7 +301,6 @@
             const orderError = ref(null);
 
             const API_BASE_URL = 'http://localhost:11299/dingcan_war_exploded/api';
-            // 全局设置axios，确保所有请求都携带cookie
             axios.defaults.withCredentials = true;
 
             // --- 计算属性 ---
@@ -262,6 +315,18 @@
                 } catch (e) {
                     console.error("获取菜品失败:", e);
                     alert("无法加载菜品列表，请检查后端服务是否运行。");
+                }
+            };
+
+            const performSearch = async () => {
+                try {
+                    const response = await axios.get(`${API_BASE_URL}/dishes/search`, {
+                        params: { keyword: searchKeyword.value }
+                    });
+                    dishes.value = response.data;
+                } catch (e) {
+                    console.error("搜索菜品失败:", e);
+                    alert("搜索失败，请稍后再试。");
                 }
             };
 
@@ -347,8 +412,6 @@
                 }
                 try {
                     const response = await axios.get(`${API_BASE_URL}/orders/my-orders`);
-                    // **[调试日志]** 打印从后端获取的原始数据
-                    console.log("从后端获取的订单数据:", JSON.stringify(response.data, null, 2));
                     myOrders.value = response.data;
                     showMyOrdersModal.value = true;
                 } catch (error) {
@@ -360,12 +423,47 @@
             const cancelOrder = async (orderToCancel) => {
                 if (!confirm(`确定要取消订单【${orderToCancel.id}】吗？`)) return;
                 try {
-                    await axios.put(`${API_BASE_URL}/orders/${orderToCancel.id}/cancel`);
+                    const response = await axios.put(`${API_BASE_URL}/orders/${orderToCancel.id}/cancel`);
                     const index = myOrders.value.findIndex(o => o.id === orderToCancel.id);
-                    if(index !== -1) myOrders.value[index].status = 'CANCELLED';
+                    if(index !== -1) {
+                        myOrders.value[index].status = response.data.status;
+                    }
                     alert("订单取消成功！");
                 } catch (error) {
                     alert(error.response?.data?.error || "取消失败，请重试。");
+                }
+            };
+
+            const openProfileModal = () => {
+                if (currentUser.value) {
+                    profileForm.value.phone = currentUser.value.phone;
+                    profileError.value = null;
+                    showProfileModal.value = true;
+                }
+            };
+
+            const closeProfileModal = () => {
+                showProfileModal.value = false;
+                isEditingProfile.value = false;
+            };
+
+            const cancelEditProfile = () => {
+                isEditingProfile.value = false;
+                profileForm.value.phone = currentUser.value.phone;
+                profileError.value = null;
+            };
+
+            const saveProfile = async () => {
+                profileError.value = null;
+                try {
+                    const response = await axios.put(`${API_BASE_URL}/users/me/update`, {
+                        phone: profileForm.value.phone
+                    });
+                    currentUser.value = response.data;
+                    alert('个人信息更新成功！');
+                    isEditingProfile.value = false;
+                } catch (error) {
+                    profileError.value = error.response?.data?.error || '更新失败，请重试。';
                 }
             };
 
@@ -386,11 +484,16 @@
             });
 
             return {
+                // 已有
                 dishes, currentUser, showLoginModal, showRegisterModal, showCartModal,
                 loginForm, registerForm, authError, cart, shippingInfo, orderError,
                 cartItemCount, cartTotalPrice, login, register, logout, addToCart,
                 increaseQuantity, decreaseQuantity, clearCart, placeOrder,
-                showMyOrdersModal, myOrders, openMyOrders, cancelOrder, getStatusText, isCancellable
+                showMyOrdersModal, myOrders, openMyOrders, cancelOrder, getStatusText, isCancellable,
+                searchKeyword, performSearch,
+                // 新增
+                showProfileModal, isEditingProfile, profileForm, profileError,
+                openProfileModal, closeProfileModal, cancelEditProfile, saveProfile
             };
         }
     }).mount('#app');
