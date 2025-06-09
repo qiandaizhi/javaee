@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.dingcan.mapper.OrderMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO orders (user_id, total_price, address, phone, status)
+        VALUES (#{userId}, #{totalPrice}, #{address}, #{phone}, #{status})
+    </insert>
+    <select id="findById" resultType="Order">
+        SELECT * FROM orders WHERE id = #{id}
+    </select>
+    <select id="findByUserId" resultType="Order">
+        SELECT * FROM orders WHERE user_id = #{userId} ORDER BY create_time DESC
+    </select>
+    <update id="updateStatus">
+        UPDATE orders SET status = #{status} WHERE id = #{id}
+    </update>
+</mapper>

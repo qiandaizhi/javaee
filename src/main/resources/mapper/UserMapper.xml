@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "[http://mybatis.org/dtd/mybatis-3-mapper.dtd](http://mybatis.org/dtd/mybatis-3-mapper.dtd)">
+<mapper namespace="com.example.dingcan.mapper.UserMapper">
+
+    <select id="findByUsername" resultType="com.example.dingcan.pojo.User">
+        SELECT id, username, password, phone, create_time as createTime
+        FROM users
+        WHERE username = #{username}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (username, password, phone)
+        VALUES (#{username}, #{password}, #{phone})
+    </insert>
+
+</mapper>

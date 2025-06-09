@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "[http://mybatis.org/dtd/mybatis-3-mapper.dtd](http://mybatis.org/dtd/mybatis-3-mapper.dtd)">
+<mapper namespace="com.example.dingcan.mapper.OrderItemMapper">
+
+    <insert id="batchInsert">
+        INSERT INTO order_items (order_id, dish_id, quantity, price)
+        VALUES
+        <foreach collection="items" item="item" separator=",">
+            (#{item.orderId}, #{item.dishId}, #{item.quantity}, #{item.price})
+        </foreach>
+    </insert>
+
+    <resultMap id="OrderItemWithDishResultMap" type="com.example.dingcan.pojo.OrderItem">
+        <id property="id" column="oi_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="dishId" column="dish_id"/>
+        <result property="quantity" column="quantity"/>
+        <result property="price" column="oi_price"/>
+        <association property="dish" javaType="com.example.dingcan.pojo.Dish">
+            <id property="id" column="dish_id"/>
+            <result property="name" column="dish_name"/>
+            <result property="imageUrl" column="dish_image_url"/>
+        </association>
+    </resultMap>
+
+    <select id="findByOrderId" resultMap="OrderItemWithDishResultMap">
+        SELECT
+        oi.id as oi_id,
+        oi.order_id,
+        oi.dish_id,
+        oi.quantity,
+        oi.price as oi_price,
+        d.name as dish_name,
+        d.image_url as dish_image_url
+        FROM
+        order_items oi
+        JOIN
+        dishes d ON oi.dish_id = d.id
+        WHERE
+        oi.order_id = #{orderId}
+    </select>
+
+</mapper>

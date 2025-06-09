@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线上订餐系统</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        :root { --primary-color: #f85737; --bg-color: #f4f5f7; --card-bg: #fff; --text-color: #333; --text-light: #888; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-color); margin: 0; color: var(--text-color); }
+        .container { max-width: 1200px; margin: 20px auto; padding: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .user-section { display: flex; gap: 10px; align-items: center; }
+        .user-info { font-weight: bold; }
+        button { cursor: pointer; padding: 8px 15px; border-radius: 6px; border: 1px solid #ccc; background-color: var(--card-bg); transition: all 0.2s; }
+        button:hover { background-color: #f0f0f0; }
+        button.primary { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+        button.primary:hover { background-color: #e04a2f; }
+        button.outline { background-color: transparent; color: var(--primary-color); border-color: var(--primary-color); }
+
+        .dish-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        .dish-card { background-color: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; }
+        .dish-image { width: 100%; height: 200px; object-fit: cover; }
+        .dish-info { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .dish-info h3 { margin: 0 0 10px; font-size: 1.2rem; }
+        .dish-info .price { font-size: 1.4rem; color: var(--primary-color); font-weight: bold; margin-bottom: 15px; }
+        .dish-info .add-to-cart-btn { margin-top: auto; }
+
+        .cart-fab { position: fixed; bottom: 40px; right: 40px; width: 60px; height: 60px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 99; }
+        .cart-badge { position: absolute; top: 0; right: 0; background-color: #fff; color: var(--primary-color); border-radius: 50%; width: 22px; height: 22px; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 1px solid var(--primary-color); }
+
+        .modal { position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+        .modal-content { background-color: #fefefe; padding: 25px; border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); width: 90%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; }
+        .modal-body { overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0; }
+        .modal-header h2 { margin: 0; }
+        .modal-close { font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa; }
+        .modal-footer { margin-top: 20px; text-align: right; flex-shrink: 0; display: flex; justify-content: flex-end; gap: 10px;}
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: calc(100% - 22px); padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
+        .form-error { color: red; font-size: 0.9em; margin-top: 5px; min-height: 1.2em; }
+
+        .order-card { border: 1px solid #eee; border-radius: 8px; margin-bottom: 15px; padding: 15px; }
+        .order-header { display: flex; justify-content: space-between; font-size: 0.9em; color: var(--text-light); margin-bottom: 10px; }
+        .order-body { display: flex; gap: 15px; }
+        .order-dishes { flex-grow: 1; }
+        .order-dish-item { display: flex; align-items: center; gap: 10px; font-size: 0.9em; margin-bottom: 5px; }
+        .order-dish-item img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
+        .order-info { text-align: right; }
+        .order-info .total { font-weight: bold; font-size: 1.2em; }
+        .order-info .status { font-weight: bold; padding: 3px 8px; border-radius: 5px; color: #fff; }
+        .status-COMPLETED { background-color: #2ecc71; }
+        .status-DELIVERING { background-color: #3498db; }
+        .status-PAID { background-color: #f39c12; }
+        .status-CANCELLED { background-color: #95a5a6; }
+        .order-actions { margin-top: 10px; text-align: right; }
+        .cart-item { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; padding: 10px 0; }
+        .cart-item-name { flex-grow: 1; }
+        .cart-item-quantity { display: flex; align-items: center; gap: 8px; }
+        .cart-item-quantity button { padding: 2px 8px; }
+        .cart-total { text-align: right; font-size: 1.2rem; font-weight: bold; margin-top: 20px; }
+        .empty-cart { text-align: center; color: #888; padding: 40px; }
+    </style>
+</head>
+<body>
+
+<div id="app" class="container">
+    <header>
+        <h1>线上订餐系统</h1>
+        <div class="user-section">
+            <div v-if="currentUser" class="user-info">
+                欢迎, {{ currentUser.username }}
+                <button class="outline" @click="openMyOrders">我的订单</button>
+                <button @click="logout">退出</button>
+            </div>
+            <div v-else>
+                <button @click="showLoginModal = true">登录</button>
+                <button class="primary" @click="showRegisterModal = true">注册</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 菜品列表 -->
+    <div class="dish-grid">
+        <div class="dish-card" v-for="dish in dishes" :key="dish.id">
+            <img :src="dish.imageUrl" class="dish-image" :alt="dish.name" @error="e => e.target.src='https://placehold.co/300x200/cccccc/ffffff?text=Image+Not+Found'">
+            <div class="dish-info">
+                <h3>{{ dish.name }}</h3>
+                <div class="price">¥{{ dish.price.toFixed(2) }}</div>
+                <button class="primary add-to-cart-btn" @click="addToCart(dish)">加入购物车</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 浮动购物车按钮 -->
+    <div class="cart-fab" @click="showCartModal = true">
+        🛒
+        <span v-if="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
+    </div>
+
+    <!-- 登录模态框 -->
+    <div v-if="showLoginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>用户登录</h2>
+                <span class="modal-close" @click="showLoginModal = false">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>用户名:</label>
+                <input v-model="loginForm.username" type="text" @keyup.enter="login">
+            </div>
+            <div class="form-group">
+                <label>密码:</label>
+                <input v-model="loginForm.password" type="password" @keyup.enter="login">
+            </div>
+            <div class="form-error">{{ authError }}</div>
+            <div class="modal-footer">
+                <button @click="showLoginModal = false">取消</button>
+                <button class="primary" @click="login">登录</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 注册模态框 -->
+    <div v-if="showRegisterModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>用户注册</h2>
+                <span class="modal-close" @click="showRegisterModal = false">&times;</span>
+            </div>
+            <div class="form-group"><label>用户名:</label><input v-model="registerForm.username" type="text"></div>
+            <div class="form-group"><label>密码:</label><input v-model="registerForm.password" type="password"></div>
+            <div class="form-group"><label>手机号:</label><input v-model="registerForm.phone" type="text"></div>
+            <div class="form-error">{{ authError }}</div>
+            <div class="modal-footer">
+                <button @click="showRegisterModal = false">取消</button>
+                <button class="primary" @click="register">立即注册</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 购物车和结算模态框 -->
+    <div v-if="showCartModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>我的购物车</h2>
+                <span class="modal-close" @click="showCartModal = false">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div v-if="cart.length > 0">
+                    <div class="cart-item" v-for="item in cart" :key="item.dishId">
+                        <span class="cart-item-name">{{ item.name }}</span>
+                        <div class="cart-item-quantity">
+                            <button @click="decreaseQuantity(item)">-</button>
+                            <span>{{ item.quantity }}</span>
+                            <button @click="increaseQuantity(item)">+</button>
+                        </div>
+                        <span>¥{{ (item.price * item.quantity).toFixed(2) }}</span>
+                    </div>
+                    <div class="cart-total">
+                        总计: ¥{{ cartTotalPrice.toFixed(2) }}
+                    </div>
+                    <hr>
+                    <h3>配送信息</h3>
+                    <div class="form-group">
+                        <label>收货地址:</label>
+                        <input v-model="shippingInfo.address" type="text" placeholder="请输入您的收货地址">
+                    </div>
+                    <div class="form-group">
+                        <label>联系电话:</label>
+                        <input v-model="shippingInfo.phone" type="text" placeholder="请输入您的手机号码">
+                    </div>
+                    <div class="form-error">{{ orderError }}</div>
+                </div>
+                <div v-else class="empty-cart">
+                    购物车是空的，快去添加喜欢的菜品吧！
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button v-if="cart.length > 0" @click="clearCart">清空购物车</button>
+                <button v-if="cart.length > 0" class="primary" @click="placeOrder">确认下单</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 我的订单 模态框 -->
+    <div v-if="showMyOrdersModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>我的历史订单</h2>
+                <span class="modal-close" @click="showMyOrdersModal = false">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div v-if="!myOrders || myOrders.length === 0">暂无订单记录。</div>
+                <div v-for="order in myOrders" :key="order.id" class="order-card">
+                    <div class="order-header">
+                        <span>订单号: {{ order.id }}</span>
+                        <!-- 防御性渲染 #1：检查createTime是否存在 -->
+                        <span>下单时间: {{ order.createTime ? new Date(order.createTime).toLocaleString() : '未知' }}</span>
+                    </div>
+                    <div class="order-body">
+                        <div class="order-dishes">
+                            <!-- 防御性渲染 #2：使用<template>包裹v-for，并检查orderItems是否存在 -->
+                            <template v-if="order.orderItems && Array.isArray(order.orderItems)">
+                                <div v-for="item in order.orderItems" :key="item.id" class="order-dish-item" v-if="item && item.dish">
+                                    <img :src="item.dish.imageUrl" @error="e => e.target.src='https://placehold.co/40x40/cccccc/ffffff?text=IMG'">
+                                    <span>{{ item.dish.name }} x {{ item.quantity }}</span>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="order-info">
+                            <!-- 防御性渲染 #3：检查totalPrice是否存在 -->
+                            <div class="total">¥{{ order.totalPrice != null ? order.totalPrice.toFixed(2) : '0.00' }}</div>
+                            <div class="status" :class="'status-' + order.status">{{ getStatusText(order.status) }}</div>
+                        </div>
+                    </div>
+                    <div class="order-actions">
+                        <button v-if="isCancellable(order.status)" @click="cancelOrder(order)">取消订单</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, onMounted, computed } = Vue;
+
+    createApp({
+        setup() {
+            // --- 状态 ---
+            const dishes = ref([]);
+            const currentUser = ref(null);
+            const showLoginModal = ref(false);
+            const showRegisterModal = ref(false);
+            const showCartModal = ref(false);
+            const showMyOrdersModal = ref(false);
+            const myOrders = ref([]);
+
+            const loginForm = ref({ username: '', password: '' });
+            const registerForm = ref({ username: '', password: '', phone: '' });
+            const authError = ref(null);
+            const cart = ref([]);
+            const shippingInfo = ref({ address: '', phone: '' });
+            const orderError = ref(null);
+
+            const API_BASE_URL = 'http://localhost:11299/dingcan_war_exploded/api';
+            // 全局设置axios，确保所有请求都携带cookie
+            axios.defaults.withCredentials = true;
+
+            // --- 计算属性 ---
+            const cartItemCount = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
+            const cartTotalPrice = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+
+            // --- 方法 ---
+            const fetchDishes = async () => {
+                try {
+                    const response = await axios.get(`${API_BASE_URL}/dishes/list`);
+                    dishes.value = response.data;
+                } catch (e) {
+                    console.error("获取菜品失败:", e);
+                    alert("无法加载菜品列表，请检查后端服务是否运行。");
+                }
+            };
+
+            const addToCart = (dish) => {
+                const existingItem = cart.value.find(item => item.dishId === dish.id);
+                if (existingItem) {
+                    existingItem.quantity++;
+                } else {
+                    cart.value.push({ dishId: dish.id, name: dish.name, price: dish.price, quantity: 1 });
+                }
+            };
+
+            const increaseQuantity = (cartItem) => cartItem.quantity++;
+            const decreaseQuantity = (cartItem) => {
+                if (cartItem.quantity > 1) {
+                    cartItem.quantity--;
+                } else {
+                    cart.value = cart.value.filter(item => item.dishId !== cartItem.dishId);
+                }
+            };
+
+            const clearCart = () => {
+                if(confirm('确定要清空购物车吗？')) {
+                    cart.value = [];
+                }
+            };
+
+            const placeOrder = async () => {
+                if (!currentUser.value) {
+                    orderError.value = "请先登录再下单！"; return;
+                }
+                if (!shippingInfo.value.address || !shippingInfo.value.phone) {
+                    orderError.value = "请输入完整的配送信息！"; return;
+                }
+                orderError.value = null;
+                const orderRequest = {
+                    cartItems: cart.value.map(item => ({ dishId: item.dishId, quantity: item.quantity })),
+                    address: shippingInfo.value.address,
+                    phone: shippingInfo.value.phone
+                };
+                try {
+                    const response = await axios.post(`${API_BASE_URL}/orders/create`, orderRequest);
+                    alert(`下单成功！您的订单号是: ${response.data.id}`);
+                    cart.value = [];
+                    showCartModal.value = false;
+                } catch (error) {
+                    orderError.value = error.response?.data?.error || '下单失败，请稍后再试。';
+                }
+            };
+
+            const handleAuthRequest = async (action, formRef, modalRef) => {
+                authError.value = null;
+                try {
+                    const response = await action();
+                    currentUser.value = response.data;
+                    formRef.value = { username: '', password: '', phone: '' };
+                    modalRef.value = false;
+                } catch (error) {
+                    authError.value = error.response?.data?.error || '操作失败，请重试';
+                }
+            };
+
+            const login = () => handleAuthRequest(() => axios.post(`${API_BASE_URL}/users/login`, loginForm.value), loginForm, showLoginModal);
+            const register = () => handleAuthRequest(() => axios.post(`${API_BASE_URL}/users/register`, registerForm.value), registerForm, showRegisterModal);
+
+            const logout = async () => {
+                try {
+                    await axios.post(`${API_BASE_URL}/users/logout`);
+                    currentUser.value = null;
+                } catch(e) { console.error("退出失败:", e); }
+            };
+
+            const checkCurrentUser = async () => {
+                try {
+                    const response = await axios.get(`${API_BASE_URL}/users/me`);
+                    currentUser.value = response.data;
+                } catch (error) { /* 未登录，忽略错误 */ }
+            };
+
+            const openMyOrders = async () => {
+                if (!currentUser.value) {
+                    alert("请先登录！"); return;
+                }
+                try {
+                    const response = await axios.get(`${API_BASE_URL}/orders/my-orders`);
+                    // **[调试日志]** 打印从后端获取的原始数据
+                    console.log("从后端获取的订单数据:", JSON.stringify(response.data, null, 2));
+                    myOrders.value = response.data;
+                    showMyOrdersModal.value = true;
+                } catch (error) {
+                    console.error("获取订单失败:", error);
+                    alert("获取订单失败，请稍后再试。");
+                }
+            };
+
+            const cancelOrder = async (orderToCancel) => {
+                if (!confirm(`确定要取消订单【${orderToCancel.id}】吗？`)) return;
+                try {
+                    await axios.put(`${API_BASE_URL}/orders/${orderToCancel.id}/cancel`);
+                    const index = myOrders.value.findIndex(o => o.id === orderToCancel.id);
+                    if(index !== -1) myOrders.value[index].status = 'CANCELLED';
+                    alert("订单取消成功！");
+                } catch (error) {
+                    alert(error.response?.data?.error || "取消失败，请重试。");
+                }
+            };
+
+            const getStatusText = (status) => {
+                const map = {
+                    PENDING: "待支付", PAID: "待处理", PROCESSING: "处理中",
+                    DELIVERING: "配送中", COMPLETED: "已完成", CANCELLED: "已取消"
+                };
+                return map[status] || status;
+            };
+
+            const isCancellable = (status) => ['PENDING', 'PAID'].includes(status);
+
+            // --- 生命周期钩子 ---
+            onMounted(() => {
+                fetchDishes();
+                checkCurrentUser();
+            });
+
+            return {
+                dishes, currentUser, showLoginModal, showRegisterModal, showCartModal,
+                loginForm, registerForm, authError, cart, shippingInfo, orderError,
+                cartItemCount, cartTotalPrice, login, register, logout, addToCart,
+                increaseQuantity, decreaseQuantity, clearCart, placeOrder,
+                showMyOrdersModal, myOrders, openMyOrders, cancelOrder, getStatusText, isCancellable
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
