@@ -1,17 +1,57 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.dingcan.mapper.OrderMapper">
+
+    <resultMap id="OrderWithItemsResultMap" type="com.example.dingcan.pojo.Order">
+        <id property="id" column="order_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="totalPrice" column="total_price"/>
+        <result property="address" column="address"/>
+        <result property="phone" column="phone"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <collection property="orderItems" ofType="com.example.dingcan.pojo.OrderItem">
+            <id property="id" column="oi_id"/>
+            <result property="quantity" column="oi_quantity"/>
+            <result property="price" column="oi_price"/>
+            <association property="dish" javaType="com.example.dingcan.pojo.Dish">
+                <id property="id" column="dish_id"/>
+                <result property="name" column="dish_name"/>
+                <result property="imageUrl" column="dish_image_url"/>
+            </association>
+        </collection>
+    </resultMap>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO orders (user_id, total_price, address, phone, status)
         VALUES (#{userId}, #{totalPrice}, #{address}, #{phone}, #{status})
     </insert>
-    <select id="findById" resultType="Order">
-        SELECT * FROM orders WHERE id = #{id}
+
+    <select id="findById" resultType="com.example.dingcan.pojo.Order">
+        SELECT id, user_id as userId, total_price as totalPrice, address, phone, status, create_time as createTime
+        FROM orders
+        WHERE id = #{id}
     </select>
-    <select id="findByUserId" resultType="Order">
-        SELECT * FROM orders WHERE user_id = #{userId} ORDER BY create_time DESC
+
+    <select id="findByUserId" resultMap="OrderWithItemsResultMap">
+        SELECT
+            o.id as order_id, o.user_id, o.total_price, o.address, o.phone, o.status, o.create_time,
+            oi.id as oi_id, oi.quantity as oi_quantity, oi.price as oi_price,
+            d.id as dish_id, d.name as dish_name, d.image_url as dish_image_url
+        FROM
+            orders o
+                LEFT JOIN
+            order_items oi ON o.id = oi.order_id
+                LEFT JOIN
+            dishes d ON oi.dish_id = d.id
+        WHERE
+            o.user_id = #{userId}
+        ORDER BY
+            o.create_time DESC;
     </select>
+
     <update id="updateStatus">
         UPDATE orders SET status = #{status} WHERE id = #{id}
     </update>
+
 </mapper>
