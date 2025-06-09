@@ -18,21 +18,9 @@
         button.primary { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
         button.primary:hover { background-color: #e04a2f; }
         button.outline { background-color: transparent; color: var(--primary-color); border-color: var(--primary-color); }
-
         .search-section { display: flex; flex-grow: 1; max-width: 500px; }
-        .search-section input {
-            flex-grow: 1;
-            border: 1px solid #ccc;
-            padding: 8px 12px;
-            border-radius: 6px 0 0 6px;
-            outline: none;
-            font-size: 1rem;
-        }
-        .search-section button {
-            border-radius: 0 6px 6px 0;
-            border-left: none;
-        }
-
+        .search-section input { flex-grow: 1; border: 1px solid #ccc; padding: 8px 12px; border-radius: 6px 0 0 6px; outline: none; font-size: 1rem; }
+        .search-section button { border-radius: 0 6px 6px 0; border-left: none; }
         .dish-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
         .dish-card { background-color: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; }
         .dish-image { width: 100%; height: 200px; object-fit: cover; }
@@ -40,10 +28,8 @@
         .dish-info h3 { margin: 0 0 10px; font-size: 1.2rem; }
         .dish-info .price { font-size: 1.4rem; color: var(--primary-color); font-weight: bold; margin-bottom: 15px; }
         .dish-info .add-to-cart-btn { margin-top: auto; }
-
         .cart-fab { position: fixed; bottom: 40px; right: 40px; width: 60px; height: 60px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 99; }
         .cart-badge { position: absolute; top: 0; right: 0; background-color: #fff; color: var(--primary-color); border-radius: 50%; width: 22px; height: 22px; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 1px solid var(--primary-color); }
-
         .modal { position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
         .modal-content { background-color: #fefefe; padding: 25px; border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); width: 90%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; }
         .modal-body { overflow-y: auto; }
@@ -53,34 +39,38 @@
         .modal-footer { margin-top: 20px; text-align: right; flex-shrink: 0; display: flex; justify-content: flex-end; gap: 10px;}
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input { width: calc(100% - 22px); padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
+        .form-group input, .form-group textarea { width: calc(100% - 22px); padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
         .form-error { color: red; font-size: 0.9em; margin-top: 5px; min-height: 1.2em; }
-
-        .form-group input:read-only, .form-group input:disabled {
-            background-color: #f0f0f0;
-            cursor: not-allowed;
-        }
-
+        .form-group input:read-only, .form-group input:disabled { background-color: #f0f0f0; cursor: not-allowed; }
         .order-card { border: 1px solid #eee; border-radius: 8px; margin-bottom: 15px; padding: 15px; }
         .order-header { display: flex; justify-content: space-between; font-size: 0.9em; color: var(--text-light); margin-bottom: 10px; }
         .order-body { display: flex; gap: 15px; }
         .order-dishes { flex-grow: 1; }
-        .order-dish-item { display: flex; align-items: center; gap: 10px; font-size: 0.9em; margin-bottom: 5px; }
+        .order-dish-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 0.9em; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #f0f0f0; }
+        .order-dish-item:last-child { border-bottom: none; }
+        .dish-details { display: flex; align-items: center; gap: 10px; }
         .order-dish-item img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
         .order-info { text-align: right; }
         .order-info .total { font-weight: bold; font-size: 1.2em; }
-        .order-info .status { font-weight: bold; padding: 3px 8px; border-radius: 5px; color: #fff; }
+        .order-info .status { font-weight: bold; padding: 3px 8px; border-radius: 5px; color: #fff; margin-bottom: 10px; }
         .status-COMPLETED { background-color: #2ecc71; }
         .status-DELIVERING { background-color: #3498db; }
         .status-PAID { background-color: #f39c12; }
         .status-CANCELLED { background-color: #95a5a6; }
-        .order-actions { margin-top: 10px; text-align: right; }
+        .order-actions { margin-top: 10px; }
+        .item-review { margin-top: 5px; font-size: 0.9em; }
+        .item-review .stars { color: #f39c12; }
+        .item-review p { margin: 2px 0 0 0; color: #555; padding-left: 10px; border-left: 2px solid #eee; }
         .cart-item { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; padding: 10px 0; }
         .cart-item-name { flex-grow: 1; }
         .cart-item-quantity { display: flex; align-items: center; gap: 8px; }
         .cart-item-quantity button { padding: 2px 8px; }
         .cart-total { text-align: right; font-size: 1.2rem; font-weight: bold; margin-top: 20px; }
         .empty-cart { text-align: center; color: #888; padding: 40px; }
+        .star-rating { display: flex; gap: 5px; font-size: 2em; cursor: pointer; color: #ccc; }
+        .star-rating .star.hover { color: #fde1a8; }
+        .star-rating .star.selected { color: #f39c12; }
     </style>
 </head>
 <body>
@@ -88,12 +78,10 @@
 <div id="app" class="container">
     <header>
         <h1>线上订餐系统</h1>
-
         <div class="search-section">
             <input type="text" v-model="searchKeyword" @keyup.enter="performSearch" placeholder="搜索您感兴趣的菜品...">
             <button @click="performSearch">搜索</button>
         </div>
-
         <div class="user-section">
             <div v-if="currentUser" class="user-info">
                 欢迎, {{ currentUser.username }}
@@ -221,20 +209,27 @@
                     </div>
                     <div class="order-body">
                         <div class="order-dishes">
-                            <template v-if="order.orderItems && Array.isArray(order.orderItems)">
-                                <div v-for="item in order.orderItems" :key="item.id" class="order-dish-item" v-if="item && item.dish">
+                            <div v-for="item in order.orderItems" :key="item.id" class="order-dish-item" v-if="item && item.dish">
+                                <div class="dish-details">
                                     <img :src="item.dish.imageUrl" @error="e => e.target.src='https://placehold.co/40x40/cccccc/ffffff?text=IMG'">
-                                    <span>{{ item.dish.name }} x {{ item.quantity }}</span>
+                                    <div>
+                                        <span>{{ item.dish.name }} x {{ item.quantity }}</span>
+                                        <div v-if="item.review" class="item-review">
+                                            <div class="stars" v-html="'&#9733;'.repeat(item.review.rating) + '&#9734;'.repeat(5 - item.review.rating)"></div>
+                                            <p>{{ item.review.comment }}</p>
+                                        </div>
+                                    </div>
                                 </div>
-                            </template>
+                                <button v-if="order.status === 'COMPLETED' && !item.review" @click="openEvaluationModal(order, item)" class="primary">评价</button>
+                            </div>
                         </div>
                         <div class="order-info">
                             <div class="total">¥{{ order.totalPrice != null ? order.totalPrice.toFixed(2) : '0.00' }}</div>
                             <div class="status" :class="'status-' + order.status">{{ getStatusText(order.status) }}</div>
+                            <div class="order-actions">
+                                <button v-if="isCancellable(order.status)" @click="cancelOrder(order)">取消订单</button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="order-actions">
-                        <button v-if="isCancellable(order.status)" @click="cancelOrder(order)">取消订单</button>
                     </div>
                 </div>
             </div>
@@ -273,6 +268,37 @@
             </div>
         </div>
     </div>
+
+    <div v-if="showEvaluationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>订单评价</h2>
+                <span class="modal-close" @click="showEvaluationModal = false">&times;</span>
+            </div>
+            <div class="modal-body" v-if="currentOrderItemForEvaluation">
+                <p>正在为订单 <strong>#{{ currentOrderItemForEvaluation.orderId }}</strong> 中的菜品 <strong>"{{ currentOrderItemForEvaluation.dish.name }}"</strong> 进行评价</p>
+                <div class="form-group">
+                    <label>评分:</label>
+                    <div class="star-rating">
+                        <span v-for="star in 5" :key="star" class="star"
+                              :class="{ 'selected': star <= evaluationForm.rating, 'hover': star <= hoverRating && !evaluationForm.rating }"
+                              @click="evaluationForm.rating = star"
+                              @mouseover="hoverRating = star"
+                              @mouseleave="hoverRating = 0">&#9733;</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>评价内容:</label>
+                    <textarea v-model="evaluationForm.comment" placeholder="请输入您的评价..." rows="4"></textarea>
+                </div>
+                <div class="form-error">{{ evaluationError }}</div>
+            </div>
+            <div class="modal-footer">
+                <button @click="showEvaluationModal = false">取消</button>
+                <button class="primary" @click="submitEvaluation">提交评价</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -280,7 +306,7 @@
 
     createApp({
         setup() {
-            // --- 状态 ---
+            // --- States ---
             const dishes = ref([]);
             const currentUser = ref(null);
             const showLoginModal = ref(false);
@@ -299,15 +325,20 @@
             const cart = ref([]);
             const shippingInfo = ref({ address: '', phone: '' });
             const orderError = ref(null);
+            const showEvaluationModal = ref(false);
+            const currentOrderItemForEvaluation = ref(null);
+            const evaluationForm = ref({ orderId: null, dishId: null, rating: 0, comment: '' });
+            const evaluationError = ref(null);
+            const hoverRating = ref(0);
 
             const API_BASE_URL = 'http://localhost:11299/dingcan_war_exploded/api';
             axios.defaults.withCredentials = true;
 
-            // --- 计算属性 ---
+            // --- Computed Properties ---
             const cartItemCount = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
             const cartTotalPrice = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
 
-            // --- 方法 ---
+            // --- Methods ---
             const fetchDishes = async () => {
                 try {
                     const response = await axios.get(`${API_BASE_URL}/dishes/list`);
@@ -423,7 +454,7 @@
             const cancelOrder = async (orderToCancel) => {
                 if (!confirm(`确定要取消订单【${orderToCancel.id}】吗？`)) return;
                 try {
-                    const response = await axios.put(`${API_BASE_URL}/orders/${orderToCancel.id}/cancel`);
+                    const response = await axios.post(`${API_BASE_URL}/orders/${orderToCancel.id}/cancel`);
                     const index = myOrders.value.findIndex(o => o.id === orderToCancel.id);
                     if(index !== -1) {
                         myOrders.value[index].status = response.data.status;
@@ -467,6 +498,47 @@
                 }
             };
 
+            const openEvaluationModal = (order, item) => {
+                currentOrderItemForEvaluation.value = item;
+                evaluationForm.value = {
+                    orderId: order.id,
+                    dishId: item.dishId,
+                    rating: 0,
+                    comment: ''
+                };
+                evaluationError.value = null;
+                showEvaluationModal.value = true;
+            };
+
+            const submitEvaluation = async () => {
+                if (evaluationForm.value.rating === 0) {
+                    evaluationError.value = '请选择评分星级'; return;
+                }
+                if (!evaluationForm.value.comment.trim()) {
+                    evaluationError.value = '请输入评价内容'; return;
+                }
+                evaluationError.value = null;
+
+                try {
+                    const response = await axios.post(`${API_BASE_URL}/reviews`, evaluationForm.value);
+                    const newReview = response.data;
+
+                    const order = myOrders.value.find(o => o.id === newReview.orderId);
+                    if (order) {
+                        const item = order.orderItems.find(i => i.dishId === newReview.dishId);
+                        if (item) {
+                            item.review = newReview;
+                        }
+                    }
+
+                    alert('评价成功！');
+                    showEvaluationModal.value = false;
+
+                } catch (error) {
+                    evaluationError.value = error.response?.data?.error || '评价提交失败，请重试。';
+                }
+            };
+
             const getStatusText = (status) => {
                 const map = {
                     PENDING: "待支付", PAID: "待处理", PROCESSING: "处理中",
@@ -484,16 +556,16 @@
             });
 
             return {
-                // 已有
                 dishes, currentUser, showLoginModal, showRegisterModal, showCartModal,
                 loginForm, registerForm, authError, cart, shippingInfo, orderError,
                 cartItemCount, cartTotalPrice, login, register, logout, addToCart,
                 increaseQuantity, decreaseQuantity, clearCart, placeOrder,
                 showMyOrdersModal, myOrders, openMyOrders, cancelOrder, getStatusText, isCancellable,
                 searchKeyword, performSearch,
-                // 新增
                 showProfileModal, isEditingProfile, profileForm, profileError,
-                openProfileModal, closeProfileModal, cancelEditProfile, saveProfile
+                openProfileModal, closeProfileModal, cancelEditProfile, saveProfile,
+                showEvaluationModal, currentOrderItemForEvaluation, evaluationForm, evaluationError,
+                hoverRating, openEvaluationModal, submitEvaluation
             };
         }
     }).mount('#app');

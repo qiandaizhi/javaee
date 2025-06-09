@@ -90,4 +90,9 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus("CANCELLED");
         return order;
     }
+
+    @Override
+    public Order addOrderEvaluation(Integer orderId, Integer userId, String text, Integer rating) throws Exception {
+        return null;
+    }
 }

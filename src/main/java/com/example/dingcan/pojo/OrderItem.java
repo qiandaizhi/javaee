@@ -7,13 +7,13 @@ public class OrderItem {
     private Integer orderId;
     private Integer dishId;
     private Integer quantity;
-    private BigDecimal price; // 下单时的单价
-
-    // --- 本次新增的字段 ---
-    // 这个字段不对应数据库列，用于在查询时方便地关联菜品信息
+    private BigDecimal price;
     private Dish dish;
 
-    // --- Getters and Setters ---
+    // 每个订单项可能有一条评价
+    private Review review;
+
+    // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public Integer getOrderId() { return orderId; }
@@ -24,8 +24,8 @@ public class OrderItem {
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
-
-    // --- 新增的Getter和Setter ---
     public Dish getDish() { return dish; }
     public void setDish(Dish dish) { this.dish = dish; }
+    public Review getReview() { return review; }
+    public void setReview(Review review) { this.review = review; }
 }

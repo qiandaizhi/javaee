@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -28,62 +27,49 @@ public class OrderController {
     @Autowired
     private DishService dishService;
 
-    // 定义一个DTO(Data Transfer Object)来接收前端的下单请求数据
     public static class OrderRequest {
         public List<CartItem> cartItems;
         public String address;
         public String phone;
-
         public static class CartItem {
             public Integer dishId;
             public Integer quantity;
         }
     }
 
+    public static class EvaluationRequest {
+        public String text;
+        public Integer rating;
+    }
+
     @PostMapping("/create")
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest, HttpSession session) {
-        // 1. 检查用户是否登录
         User currentUser = (User) session.getAttribute("loggedInUser");
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "用户未登录，请先登录"));
         }
-
-        // 2. 验证购物车是否为空
-        if (orderRequest.cartItems == null || orderRequest.cartItems.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "购物车不能为空"));
-        }
-
-        // 3. 构建Order和OrderItem对象
-        Order order = new Order();
-        order.setUserId(currentUser.getId());
-        order.setAddress(orderRequest.address);
-        order.setPhone(orderRequest.phone);
-        order.setStatus("PAID"); // 模拟支付成功，状态为待处理
-
-        List<OrderItem> orderItems = new ArrayList<>();
-        BigDecimal totalPrice = BigDecimal.ZERO;
-
-        // 4. 循环校验菜品，计算总价
-        for (OrderRequest.CartItem cartItem : orderRequest.cartItems) {
-            Dish dish = dishService.getDishById(cartItem.dishId);
-            if (dish == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "菜品ID " + cartItem.dishId + " 不存在"));
-            }
-
-            OrderItem orderItem = new OrderItem();
-            orderItem.setDishId(cartItem.dishId);
-            orderItem.setQuantity(cartItem.quantity);
-            orderItem.setPrice(dish.getPrice()); // 使用数据库中的实时价格
-            orderItems.add(orderItem);
-
-            totalPrice = totalPrice.add(dish.getPrice().multiply(new BigDecimal(cartItem.quantity)));
-        }
-
-        order.setTotalPrice(totalPrice);
-        order.setOrderItems(orderItems);
-
-        // 5. 调用Service层创建订单
         try {
+            Order order = new Order();
+            order.setUserId(currentUser.getId());
+            order.setAddress(orderRequest.address);
+            order.setPhone(orderRequest.phone);
+            order.setStatus("PAID");
+            List<OrderItem> orderItems = new ArrayList<>();
+            BigDecimal totalPrice = BigDecimal.ZERO;
+            for (OrderRequest.CartItem cartItem : orderRequest.cartItems) {
+                Dish dish = dishService.getDishById(cartItem.dishId);
+                if (dish == null) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "菜品ID " + cartItem.dishId + " 不存在"));
+                }
+                OrderItem orderItem = new OrderItem();
+                orderItem.setDishId(cartItem.dishId);
+                orderItem.setQuantity(cartItem.quantity);
+                orderItem.setPrice(dish.getPrice());
+                orderItems.add(orderItem);
+                totalPrice = totalPrice.add(dish.getPrice().multiply(new BigDecimal(cartItem.quantity)));
+            }
+            order.setTotalPrice(totalPrice);
+            order.setOrderItems(orderItems);
             Order createdOrder = orderService.createOrder(order);
             return ResponseEntity.ok(createdOrder);
         } catch (Exception e) {
@@ -102,7 +88,7 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
-    @PutMapping("/{orderId}/cancel")
+    @PostMapping("/{orderId}/cancel")
     public ResponseEntity<?> cancelOrder(@PathVariable Integer orderId, HttpSession session) {
         User currentUser = (User) session.getAttribute("loggedInUser");
         if (currentUser == null) {
@@ -112,7 +98,14 @@ public class OrderController {
             Order cancelledOrder = orderService.cancelOrder(orderId, currentUser.getId());
             return ResponseEntity.ok(cancelledOrder);
         } catch (Exception e) {
+            // 在服务器控制台打印完整错误，方便我们调试
+            e.printStackTrace();
+            // 将清晰的错误信息返回给前端
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         }
     }
+
+    // 评价功能暂时注释，因为它需要独立的Review模块，我们先专注解决取消订单问题
+    // @PostMapping("/{orderId}/evaluate") ...
+
 }
