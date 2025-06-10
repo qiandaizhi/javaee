@@ -10,4 +10,10 @@ public interface OrderMapper {
     List<Order> findByUserId(@Param("userId") Integer userId);
     int updateStatus(@Param("id") Integer id, @Param("status") String status);
     int deleteById(@Param("id") Integer id);
+
+    /**
+     * 【新增】查询所有用户的全部订单
+     * @return 订单列表
+     */
+    List<Order> findAll();
 }

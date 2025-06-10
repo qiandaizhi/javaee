@@ -42,6 +42,7 @@ public class UserController {
     public ResponseEntity<?> loginUser(@RequestBody UserCredentials credentials, HttpSession session) {
         User user = userService.login(credentials.username, credentials.password);
         if (user != null) {
+            // 手动将用户信息存入Session
             session.setAttribute("loggedInUser", user);
             return ResponseEntity.ok(user);
         } else {
@@ -51,6 +52,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(HttpSession session) {
+        // 从Session获取当前用户
         User user = (User) session.getAttribute("loggedInUser");
         if (user != null) {
             return ResponseEntity.ok(user);
@@ -60,6 +62,7 @@ public class UserController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logoutUser(HttpSession session) {
+        // 销毁Session
         session.invalidate();
         return ResponseEntity.ok(Collections.singletonMap("message", "退出成功"));
     }
@@ -73,6 +76,7 @@ public class UserController {
         try {
             currentUser.setPhone(request.phone);
             User updatedUser = userService.updateProfile(currentUser);
+            // 更新Session中的用户信息
             session.setAttribute("loggedInUser", updatedUser);
             return ResponseEntity.ok(updatedUser);
         } catch (Exception e) {

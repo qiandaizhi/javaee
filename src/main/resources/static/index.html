@@ -13,16 +13,17 @@
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 20px; }
         .user-section { display: flex; gap: 10px; align-items: center; }
         .user-info { font-weight: bold; }
-        button { cursor: pointer; padding: 8px 15px; border-radius: 6px; border: 1px solid #ccc; background-color: var(--card-bg); transition: all 0.2s; }
-        button:hover { background-color: #f0f0f0; }
-        button.primary { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
-        button.primary:hover { background-color: #e04a2f; }
-        button.outline { background-color: transparent; color: var(--primary-color); border-color: var(--primary-color); }
+        button, a.button-link { cursor: pointer; padding: 8px 15px; border-radius: 6px; border: 1px solid #ccc; background-color: var(--card-bg); transition: all 0.2s; font-size: 14px; text-decoration: none; color: var(--text-color); display: inline-block; }
+        button:hover, a.button-link:hover { background-color: #f0f0f0; }
+        button.primary, a.button-link.primary { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+        button.primary:hover, a.button-link.primary:hover { background-color: #e04a2f; }
+        button.outline, a.button-link.outline { background-color: transparent; color: var(--primary-color); border-color: var(--primary-color); }
         .search-section { display: flex; flex-grow: 1; max-width: 500px; }
         .search-section input { flex-grow: 1; border: 1px solid #ccc; padding: 8px 12px; border-radius: 6px 0 0 6px; outline: none; font-size: 1rem; }
         .search-section button { border-radius: 0 6px 6px 0; border-left: none; }
         .dish-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
-        .dish-card { background-color: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; }
+        .dish-card { background-color: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+        .dish-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
         .dish-image { width: 100%; height: 200px; object-fit: cover; }
         .dish-info { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
         .dish-info h3 { margin: 0 0 10px; font-size: 1.2rem; }
@@ -68,9 +69,12 @@
         .cart-item-quantity button { padding: 2px 8px; }
         .cart-total { text-align: right; font-size: 1.2rem; font-weight: bold; margin-top: 20px; }
         .empty-cart { text-align: center; color: #888; padding: 40px; }
-        .star-rating { display: flex; gap: 5px; font-size: 2em; cursor: pointer; color: #ccc; }
-        .star-rating .star.hover { color: #fde1a8; }
-        .star-rating .star.selected { color: #f39c12; }
+        .dish-detail-modal .modal-content { max-width: 500px; padding: 0; }
+        .dish-detail-modal .dish-image-large { width: 100%; height: 250px; object-fit: cover; border-radius: 10px 10px 0 0;}
+        .dish-detail-modal .dish-content { padding: 25px; }
+        .dish-detail-modal .dish-title { font-size: 2rem; margin: 0 0 10px; }
+        .dish-detail-modal .dish-price { font-size: 1.8rem; color: var(--primary-color); font-weight: bold; margin-bottom: 15px; }
+        .dish-detail-modal .dish-description { color: #555; line-height: 1.6; margin-bottom: 25px; }
     </style>
 </head>
 <body>
@@ -97,12 +101,12 @@
     </header>
 
     <div class="dish-grid">
-        <div class="dish-card" v-for="dish in dishes" :key="dish.id">
+        <div class="dish-card" v-for="dish in dishes" :key="dish.id" @click="openDishDetailModal(dish)">
             <img :src="dish.imageUrl" class="dish-image" :alt="dish.name" @error="e => e.target.src='https://placehold.co/300x200/cccccc/ffffff?text=Image+Not+Found'">
             <div class="dish-info">
                 <h3>{{ dish.name }}</h3>
                 <div class="price">¥{{ dish.price.toFixed(2) }}</div>
-                <button class="primary add-to-cart-btn" @click="addToCart(dish)">加入购物车</button>
+                <button class="primary add-to-cart-btn" @click.stop="addToCart(dish)">加入购物车</button>
             </div>
         </div>
     </div>
@@ -220,7 +224,10 @@
                                         </div>
                                     </div>
                                 </div>
-                                <button v-if="order.status === 'COMPLETED' && !item.review" @click="openEvaluationModal(order, item)" class="primary">评价</button>
+                                <a v-if="order.status === 'COMPLETED' && !item.review"
+                                   :href="'evaluate.html?orderId=' + order.id + '&dishId=' + item.dishId + '&dishName=' + encodeURIComponent(item.dish.name) + '&dishImage=' + encodeURIComponent(item.dish.imageUrl)"
+                                   class="button-link primary"
+                                   style="white-space: nowrap;">评价</a>
                             </div>
                         </div>
                         <div class="order-info">
@@ -270,36 +277,21 @@
         </div>
     </div>
 
-    <div v-if="showEvaluationModal" class="modal">
+    <div v-if="showDishDetailModal && selectedDish" class="modal dish-detail-modal" @click.self="closeDishDetailModal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2>订单评价</h2>
-                <span class="modal-close" @click="showEvaluationModal = false">&times;</span>
-            </div>
-            <div class="modal-body" v-if="currentOrderItemForEvaluation">
-                <p>正在为订单 <strong>#{{ currentOrderItemForEvaluation.orderId }}</strong> 中的菜品 <strong>"{{ currentOrderItemForEvaluation.dish.name }}"</strong> 进行评价</p>
-                <div class="form-group">
-                    <label>评分:</label>
-                    <div class="star-rating">
-                        <span v-for="star in 5" :key="star" class="star"
-                              :class="{ 'selected': star <= evaluationForm.rating, 'hover': star <= hoverRating }"
-                              @click="evaluationForm.rating = star"
-                              @mouseover="hoverRating = star"
-                              @mouseleave="hoverRating = 0">&#9733;</span>
-                    </div>
+            <span class="modal-close" style="position: absolute; top: 15px; right: 25px; z-index: 101;" @click="closeDishDetailModal">&times;</span>
+            <img :src="selectedDish.imageUrl" class="dish-image-large" :alt="selectedDish.name" @error="e => e.target.src='https://placehold.co/500x250/cccccc/ffffff?text=Image+Not+Found'">
+            <div class="dish-content">
+                <h2 class="dish-title">{{ selectedDish.name }}</h2>
+                <p class="dish-price">¥{{ selectedDish.price.toFixed(2) }}</p>
+                <p class="dish-description">{{ selectedDish.description || '暂无详细描述。' }}</p>
+                <div class="modal-footer" style="margin-top: 10px; padding: 0;">
+                    <button class="primary" @click="addToCart(selectedDish); closeDishDetailModal();">加入购物车</button>
                 </div>
-                <div class="form-group">
-                    <label>评价内容:</label>
-                    <textarea v-model="evaluationForm.comment" placeholder="请输入您的评价..." rows="4"></textarea>
-                </div>
-                <div class="form-error">{{ evaluationError }}</div>
-            </div>
-            <div class="modal-footer">
-                <button @click="showEvaluationModal = false">取消</button>
-                <button class="primary" @click="submitEvaluation">提交评价</button>
             </div>
         </div>
     </div>
+
 </div>
 
 <script>
@@ -326,13 +318,10 @@
             const cart = ref([]);
             const shippingInfo = ref({ address: '', phone: '' });
             const orderError = ref(null);
-            const showEvaluationModal = ref(false);
-            const currentOrderItemForEvaluation = ref(null);
-            const evaluationForm = ref({ orderId: null, dishId: null, rating: 0, comment: '' });
-            const evaluationError = ref(null);
-            const hoverRating = ref(0);
+            const showDishDetailModal = ref(false);
+            const selectedDish = ref(null);
 
-            const API_BASE_URL = 'http://localhost:11299/dingcan_war_exploded/api';
+            const API_BASE_URL = '/dingcan_war_exploded/api';
             axios.defaults.withCredentials = true;
 
             // --- Computed Properties ---
@@ -455,7 +444,6 @@
             const cancelOrder = async (orderToCancel) => {
                 if (!confirm(`确定要取消订单【#${orderToCancel.id}】吗？`)) return;
                 try {
-                    // 【重要修正】将 axios.put 改为 axios.post
                     const response = await axios.post(`${API_BASE_URL}/orders/${orderToCancel.id}/cancel`);
                     const index = myOrders.value.findIndex(o => o.id === orderToCancel.id);
                     if(index !== -1) {
@@ -513,47 +501,6 @@
                 }
             };
 
-            const openEvaluationModal = (order, item) => {
-                currentOrderItemForEvaluation.value = item;
-                evaluationForm.value = {
-                    orderId: order.id,
-                    dishId: item.dishId,
-                    rating: 0,
-                    comment: ''
-                };
-                evaluationError.value = null;
-                showEvaluationModal.value = true;
-            };
-
-            const submitEvaluation = async () => {
-                if (evaluationForm.value.rating === 0) {
-                    evaluationError.value = '请选择评分星级'; return;
-                }
-                if (!evaluationForm.value.comment.trim()) {
-                    evaluationError.value = '请输入评价内容'; return;
-                }
-                evaluationError.value = null;
-
-                try {
-                    const response = await axios.post(`${API_BASE_URL}/reviews`, evaluationForm.value);
-                    const newReview = response.data;
-
-                    const order = myOrders.value.find(o => o.id === newReview.orderId);
-                    if (order) {
-                        const item = order.orderItems.find(i => i.dishId === newReview.dishId);
-                        if (item) {
-                            item.review = newReview;
-                        }
-                    }
-
-                    alert('评价成功！');
-                    showEvaluationModal.value = false;
-
-                } catch (error) {
-                    evaluationError.value = error.response?.data?.error || '评价提交失败，请重试。';
-                }
-            };
-
             const getStatusText = (status) => {
                 const map = {
                     PENDING: "待支付", PAID: "待处理", PROCESSING: "处理中",
@@ -565,6 +512,18 @@
             const isCancellable = (status) => ['PAID'].includes(status);
 
             const isDeletable = (status) => ['COMPLETED', 'CANCELLED'].includes(status);
+
+            const openDishDetailModal = (dish) => {
+                selectedDish.value = dish;
+                showDishDetailModal.value = true;
+            };
+
+            const closeDishDetailModal = () => {
+                showDishDetailModal.value = false;
+                setTimeout(() => {
+                    selectedDish.value = null;
+                }, 300);
+            };
 
             // --- 生命周期钩子 ---
             onMounted(() => {
@@ -581,9 +540,8 @@
                 searchKeyword, performSearch,
                 showProfileModal, isEditingProfile, profileForm, profileError,
                 openProfileModal, closeProfileModal, cancelEditProfile, saveProfile,
-                showEvaluationModal, currentOrderItemForEvaluation, evaluationForm, evaluationError,
-                hoverRating, openEvaluationModal, submitEvaluation,
-                deleteOrder, isDeletable
+                deleteOrder, isDeletable,
+                showDishDetailModal, selectedDish, openDishDetailModal, closeDishDetailModal
             };
         }
     }).mount('#app');
