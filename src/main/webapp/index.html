@@ -51,14 +51,14 @@
         .order-dish-item:last-child { border-bottom: none; }
         .dish-details { display: flex; align-items: center; gap: 10px; }
         .order-dish-item img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
-        .order-info { text-align: right; }
+        .order-info { text-align: right; display: flex; flex-direction: column; }
         .order-info .total { font-weight: bold; font-size: 1.2em; }
         .order-info .status { font-weight: bold; padding: 3px 8px; border-radius: 5px; color: #fff; margin-bottom: 10px; }
         .status-COMPLETED { background-color: #2ecc71; }
         .status-DELIVERING { background-color: #3498db; }
         .status-PAID { background-color: #f39c12; }
         .status-CANCELLED { background-color: #95a5a6; }
-        .order-actions { margin-top: 10px; }
+        .order-actions { margin-top: auto; display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
         .item-review { margin-top: 5px; font-size: 0.9em; }
         .item-review .stars { color: #f39c12; }
         .item-review p { margin: 2px 0 0 0; color: #555; padding-left: 10px; border-left: 2px solid #eee; }
@@ -228,6 +228,7 @@
                             <div class="status" :class="'status-' + order.status">{{ getStatusText(order.status) }}</div>
                             <div class="order-actions">
                                 <button v-if="isCancellable(order.status)" @click="cancelOrder(order)">取消订单</button>
+                                <button v-if="isDeletable(order.status)" @click="deleteOrder(order)" class="primary">删除订单</button>
                             </div>
                         </div>
                     </div>
@@ -281,7 +282,7 @@
                     <label>评分:</label>
                     <div class="star-rating">
                         <span v-for="star in 5" :key="star" class="star"
-                              :class="{ 'selected': star <= evaluationForm.rating, 'hover': star <= hoverRating && !evaluationForm.rating }"
+                              :class="{ 'selected': star <= evaluationForm.rating, 'hover': star <= hoverRating }"
                               @click="evaluationForm.rating = star"
                               @mouseover="hoverRating = star"
                               @mouseleave="hoverRating = 0">&#9733;</span>
@@ -452,8 +453,9 @@
             };
 
             const cancelOrder = async (orderToCancel) => {
-                if (!confirm(`确定要取消订单【${orderToCancel.id}】吗？`)) return;
+                if (!confirm(`确定要取消订单【#${orderToCancel.id}】吗？`)) return;
                 try {
+                    // 【重要修正】将 axios.put 改为 axios.post
                     const response = await axios.post(`${API_BASE_URL}/orders/${orderToCancel.id}/cancel`);
                     const index = myOrders.value.findIndex(o => o.id === orderToCancel.id);
                     if(index !== -1) {
@@ -462,6 +464,19 @@
                     alert("订单取消成功！");
                 } catch (error) {
                     alert(error.response?.data?.error || "取消失败，请重试。");
+                }
+            };
+
+            const deleteOrder = async (orderToDelete) => {
+                if (!confirm(`确定要永久删除订单【#${orderToDelete.id}】吗？此操作无法撤销。`)) {
+                    return;
+                }
+                try {
+                    await axios.delete(`${API_BASE_URL}/orders/${orderToDelete.id}`);
+                    myOrders.value = myOrders.value.filter(o => o.id !== orderToDelete.id);
+                    alert('订单删除成功！');
+                } catch (error) {
+                    alert(error.response?.data?.error || "删除失败，请重试。");
                 }
             };
 
@@ -547,7 +562,9 @@
                 return map[status] || status;
             };
 
-            const isCancellable = (status) => ['PENDING', 'PAID'].includes(status);
+            const isCancellable = (status) => ['PAID'].includes(status);
+
+            const isDeletable = (status) => ['COMPLETED', 'CANCELLED'].includes(status);
 
             // --- 生命周期钩子 ---
             onMounted(() => {
@@ -565,7 +582,8 @@
                 showProfileModal, isEditingProfile, profileForm, profileError,
                 openProfileModal, closeProfileModal, cancelEditProfile, saveProfile,
                 showEvaluationModal, currentOrderItemForEvaluation, evaluationForm, evaluationError,
-                hoverRating, openEvaluationModal, submitEvaluation
+                hoverRating, openEvaluationModal, submitEvaluation,
+                deleteOrder, isDeletable
             };
         }
     }).mount('#app');
