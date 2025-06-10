@@ -8,9 +8,11 @@ public class OrderItem {
     private Integer dishId;
     private Integer quantity;
     private BigDecimal price;
+
+    // 用于关联展示菜品信息
     private Dish dish;
 
-    // 每个订单项可能有一条评价
+    // 【新增】每个订单项可能有一条对应的评价
     private Review review;
 
     // Getters and Setters

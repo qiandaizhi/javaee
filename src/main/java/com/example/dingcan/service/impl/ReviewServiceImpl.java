@@ -16,7 +16,7 @@ public class ReviewServiceImpl implements ReviewService {
     private ReviewMapper reviewMapper;
 
     @Autowired
-    private OrderMapper orderMapper; // 用于校验订单状态和归属
+    private OrderMapper orderMapper;
 
     @Override
     @Transactional
@@ -43,9 +43,11 @@ public class ReviewServiceImpl implements ReviewService {
 
         // 3. 设置用户ID并插入数据库
         review.setUserId(userId);
-        reviewMapper.insert(review);
+        int rowsAffected = reviewMapper.insert(review);
+        if (rowsAffected == 0) {
+            throw new Exception("提交评价失败，请重试");
+        }
 
-        // 返回带有新生成ID的Review对象
         return review;
     }
 }

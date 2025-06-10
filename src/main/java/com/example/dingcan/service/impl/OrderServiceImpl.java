@@ -24,15 +24,10 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public Order createOrder(Order order) throws Exception {
-        // 1. 插入订单主表记录
         orderMapper.insert(order);
-
-        // 2. 获取返回的自增ID
         if (order.getId() == null) {
             throw new Exception("创建订单失败，无法获取订单ID");
         }
-
-        // 3. 为每个订单项设置订单ID
         List<OrderItem> items = order.getOrderItems();
         if (items == null || items.isEmpty()) {
             throw new Exception("订单项不能为空！");
@@ -40,11 +35,7 @@ public class OrderServiceImpl implements OrderService {
         for (OrderItem item : items) {
             item.setOrderId(order.getId());
         }
-
-        // 4. 批量插入订单详情
         orderItemMapper.batchInsert(items);
-
-        // 5. 返回带有完整信息的订单对象
         return order;
     }
 
@@ -67,11 +58,8 @@ public class OrderServiceImpl implements OrderService {
             throw new Exception("无权操作不属于自己的订单");
         }
         String currentStatus = order.getStatus();
-        if ("DELIVERING".equals(currentStatus) || "COMPLETED".equals(currentStatus)) {
-            throw new Exception("订单已发货或已完成，无法取消");
-        }
-        if ("CANCELLED".equals(currentStatus)) {
-            throw new Exception("订单已经是“已取消”状态，无需重复操作");
+        if (!"PAID".equals(currentStatus)) {
+            throw new Exception("只有“待处理”状态的订单才能取消");
         }
         int rowsAffected = orderMapper.updateStatus(orderId, "CANCELLED");
         if (rowsAffected == 0) {

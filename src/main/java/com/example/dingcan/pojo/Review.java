@@ -11,7 +11,7 @@ public class Review {
     private String comment;
     private Date createTime;
 
-    // Getters 和 Setters
+    // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public Integer getOrderId() { return orderId; }

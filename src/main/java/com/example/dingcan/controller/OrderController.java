@@ -12,8 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.PrintWriter; // 新增导入
-import java.io.StringWriter; // 新增导入
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +27,6 @@ public class OrderController {
     @Autowired
     private DishService dishService;
 
-    // ... createOrder, getMyOrders 等其他方法和内部类保持不变 ...
     public static class OrderRequest {
         public List<CartItem> cartItems;
         public String address;
@@ -44,7 +41,7 @@ public class OrderController {
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest, HttpSession session) {
         User currentUser = (User) session.getAttribute("loggedInUser");
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "用户未登录，请先登录"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "用户未登录"));
         }
         try {
             Order order = new Order();
@@ -91,9 +88,6 @@ public class OrderController {
         }
     }
 
-    /**
-     * 【重要修改】这里的catch块现在会返回完整的错误报告
-     */
     @PostMapping("/{orderId}/cancel")
     public ResponseEntity<?> cancelOrder(@PathVariable Integer orderId, HttpSession session) {
         User currentUser = (User) session.getAttribute("loggedInUser");
@@ -104,17 +98,8 @@ public class OrderController {
             Order cancelledOrder = orderService.cancelOrder(orderId, currentUser.getId());
             return ResponseEntity.ok(cancelledOrder);
         } catch (Exception e) {
-            // 在服务器控制台打印错误，便于我们自己查看
             e.printStackTrace();
-
-            // --- 将完整的错误信息打包，发送给前端 ---
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            String stackTrace = sw.toString(); // e.g. "java.lang.NullPointerException\n at ..."
-
-            // 将详细错误信息放在 "error" 字段里返回
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "后端执行出错，详细信息：\n" + stackTrace));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         }
     }
 

@@ -4,7 +4,7 @@ import com.example.dingcan.mapper.UserMapper;
 import com.example.dingcan.pojo.User;
 import com.example.dingcan.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // 不再需要，可以删除
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,8 +14,8 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserMapper userMapper;
 
-    // 【修改一】不再需要密码编码器，删除或注释掉这一行
-    // private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    // 为了让Spring管理，我们把它定义成一个Bean
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
     @Transactional
@@ -23,17 +23,12 @@ public class UserServiceImpl implements UserService {
         if (userMapper.findByUsername(username) != null) {
             throw new Exception("用户名 '" + username + "' 已被注册！");
         }
-
-        // 【修改二】删除密码加密的步骤
-        // String encodedPassword = passwordEncoder.encode(password);
-
+        String encodedPassword = passwordEncoder.encode(password);
         User newUser = new User();
         newUser.setUsername(username);
-        // 直接将原始密码存入对象
-        newUser.setPassword(password);
+        newUser.setPassword(encodedPassword);
         newUser.setPhone(phone);
         userMapper.insert(newUser);
-
         newUser.setPassword(null);
         return newUser;
     }
@@ -41,23 +36,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public User login(String username, String password) {
         User user = userMapper.findByUsername(username);
-
-        if (user == null) {
-            return null;
-        }
-
-        // 【修改三】将密码验证方式从加密匹配改为简单的字符串相等判断
-        // 原来的加密验证: if (passwordEncoder.matches(password, user.getPassword()))
-        if (password.equals(user.getPassword())) {
-            // 密码正确，返回用户信息
+        if (user != null && passwordEncoder.matches(password, user.getPassword())) {
             user.setPassword(null);
             return user;
         }
-
-        return null; // 密码错误
+        return null;
     }
 
-    // updateProfile 方法保持不变
     @Override
     @Transactional
     public User updateProfile(User userToUpdate) throws Exception {

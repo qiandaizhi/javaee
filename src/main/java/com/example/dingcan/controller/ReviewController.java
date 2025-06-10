@@ -21,7 +21,6 @@ public class ReviewController {
     @Autowired
     private ReviewService reviewService;
 
-    // 用于接收评价请求数据的DTO
     public static class ReviewRequest {
         public Integer orderId;
         public Integer dishId;
