@@ -2,71 +2,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.dingcan.mapper.OrderMapper">
 
-    <resultMap id="OrderWithDetailsResultMap" type="com.example.dingcan.pojo.Order">
-        <id property="id" column="order_id"/>
-        <result property="userId" column="user_id"/>
-        <result property="totalPrice" column="total_price"/>
-        <result property="address" column="address"/>
-        <result property="phone" column="phone"/>
-        <result property="status" column="status"/>
-        <result property="createTime" column="create_time"/>
-
-        <collection property="orderItems" ofType="com.example.dingcan.pojo.OrderItem">
-            <id property="id" column="oi_id"/>
-            <result property="orderId" column="order_id"/>
-            <result property="dishId" column="dish_id"/>
-            <result property="quantity" column="quantity"/>
-            <result property="price" column="oi_price"/>
-            <association property="dish" javaType="com.example.dingcan.pojo.Dish">
-                <id property="id" column="dish_id"/>
-                <result property="name" column="dish_name"/>
-                <result property="imageUrl" column="dish_image_url"/>
-            </association>
-            <association property="review" javaType="com.example.dingcan.pojo.Review">
-                <id property="id" column="review_id"/>
-                <result property="rating" column="review_rating"/>
-                <result property="comment" column="review_comment"/>
-                <result property="createTime" column="review_create_time"/>
-            </association>
-        </collection>
-    </resultMap>
-
-    <select id="findByUserId" resultMap="OrderWithDetailsResultMap">
-        SELECT
-            o.id as order_id, o.user_id, o.total_price, o.address, o.phone, o.status, o.create_time,
-            oi.id as oi_id, oi.quantity as oi_quantity, oi.price as oi_price,
-            d.id as dish_id, d.name as dish_name, d.image_url as dish_image_url,
-            r.id as review_id, r.rating as review_rating, r.comment as review_comment, r.create_time as review_create_time
-        FROM
-            orders o
-                LEFT JOIN
-            order_items oi ON o.id = oi.order_id
-                LEFT JOIN
-            dishes d ON oi.dish_id = d.id
-                LEFT JOIN
-            reviews r ON o.id = r.order_id AND oi.dish_id = r.dish_id
-        WHERE
-            o.user_id = #{userId}
-        ORDER BY
-            o.create_time DESC, oi.id ASC;
+    <select id="findByUserId" resultType="com.example.dingcan.pojo.Order">
+        SELECT * FROM orders WHERE user_id = #{userId} ORDER BY create_time DESC
     </select>
 
-    <select id="findAll" resultMap="OrderWithDetailsResultMap">
-        SELECT
-            o.id as order_id, o.user_id, o.total_price, o.address, o.phone, o.status, o.create_time,
-            oi.id as oi_id, oi.quantity as oi_quantity, oi.price as oi_price,
-            d.id as dish_id, d.name as dish_name, d.image_url as dish_image_url,
-            r.id as review_id, r.rating as review_rating, r.comment as review_comment, r.create_time as review_create_time
-        FROM
-            orders o
-                LEFT JOIN
-            order_items oi ON o.id = oi.order_id
-                LEFT JOIN
-            dishes d ON oi.dish_id = d.id
-                LEFT JOIN
-            reviews r ON o.id = r.order_id AND oi.dish_id = r.dish_id
-        ORDER BY
-            o.create_time DESC, oi.id ASC;
+    <select id="findAll" resultType="com.example.dingcan.pojo.Order">
+        SELECT * FROM orders ORDER BY create_time DESC
     </select>
 
     <select id="findById" resultType="com.example.dingcan.pojo.Order">

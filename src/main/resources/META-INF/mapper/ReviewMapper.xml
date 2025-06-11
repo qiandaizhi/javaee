@@ -7,4 +7,17 @@
         VALUES (#{orderId}, #{userId}, #{dishId}, #{rating}, #{comment})
     </insert>
 
+    <select id="findByDishId" resultType="com.example.dingcan.pojo.Review">
+        SELECT
+            r.*, u.username
+        FROM
+            reviews r
+                JOIN
+            users u ON r.user_id = u.id
+        WHERE
+            r.dish_id = #{dishId}
+        ORDER BY
+            r.create_time DESC
+    </select>
+
 </mapper>

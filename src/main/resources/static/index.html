@@ -29,6 +29,8 @@
         .dish-info h3 { margin: 0 0 10px; font-size: 1.2rem; }
         .dish-info .price { font-size: 1.4rem; color: var(--primary-color); font-weight: bold; margin-bottom: 15px; }
         .dish-info .add-to-cart-btn { margin-top: auto; }
+        .dish-rating { display: flex; align-items: center; gap: 8px; color: #666; font-size: 0.9em; margin-top: -10px; margin-bottom: 10px; }
+        .stars { color: #f39c12; }
         .cart-fab { position: fixed; bottom: 40px; right: 40px; width: 60px; height: 60px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 99; }
         .cart-badge { position: absolute; top: 0; right: 0; background-color: #fff; color: var(--primary-color); border-radius: 50%; width: 22px; height: 22px; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 1px solid var(--primary-color); }
         .modal { position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
@@ -60,9 +62,6 @@
         .status-PAID { background-color: #f39c12; }
         .status-CANCELLED { background-color: #95a5a6; }
         .order-actions { margin-top: auto; display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
-        .item-review { margin-top: 5px; font-size: 0.9em; }
-        .item-review .stars { color: #f39c12; }
-        .item-review p { margin: 2px 0 0 0; color: #555; padding-left: 10px; border-left: 2px solid #eee; }
         .cart-item { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; padding: 10px 0; }
         .cart-item-name { flex-grow: 1; }
         .cart-item-quantity { display: flex; align-items: center; gap: 8px; }
@@ -75,6 +74,12 @@
         .dish-detail-modal .dish-title { font-size: 2rem; margin: 0 0 10px; }
         .dish-detail-modal .dish-price { font-size: 1.8rem; color: var(--primary-color); font-weight: bold; margin-bottom: 15px; }
         .dish-detail-modal .dish-description { color: #555; line-height: 1.6; margin-bottom: 25px; }
+        .dish-detail-modal .reviews-section { margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;}
+        .review-item { border-bottom: 1px solid #f0f0f0; padding: 15px 0; }
+        .review-item:last-child { border-bottom: none; }
+        .review-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .review-author { font-weight: bold; }
+        .review-comment { color: #555; }
     </style>
 </head>
 <body>
@@ -105,6 +110,11 @@
             <img :src="dish.imageUrl" class="dish-image" :alt="dish.name" @error="e => e.target.src='https://placehold.co/300x200/cccccc/ffffff?text=Image+Not+Found'">
             <div class="dish-info">
                 <h3>{{ dish.name }}</h3>
+                <div class="dish-rating" v-if="dish.reviews && dish.reviews.length > 0">
+                    <span class="stars" v-html="'&#9733;'.repeat(Math.round(calculateAverageRating(dish.reviews))) + '&#9734;'.repeat(5 - Math.round(calculateAverageRating(dish.reviews)))"></span>
+                    <span>{{ calculateAverageRating(dish.reviews).toFixed(1) }} 分</span>
+                    <span>({{ dish.reviews.length }}条评价)</span>
+                </div>
                 <div class="price">¥{{ dish.price.toFixed(2) }}</div>
                 <button class="primary add-to-cart-btn" @click.stop="addToCart(dish)">加入购物车</button>
             </div>
@@ -216,22 +226,16 @@
                             <div v-for="item in order.orderItems" :key="item.id" class="order-dish-item" v-if="item && item.dish">
                                 <div class="dish-details">
                                     <img :src="item.dish.imageUrl" @error="e => e.target.src='https://placehold.co/40x40/cccccc/ffffff?text=IMG'">
-                                    <div>
-                                        <span>{{ item.dish.name }} x {{ item.quantity }}</span>
-                                        <div v-if="item.review" class="item-review">
-                                            <div class="stars" v-html="'&#9733;'.repeat(item.review.rating) + '&#9734;'.repeat(5 - item.review.rating)"></div>
-                                            <p>{{ item.review.comment }}</p>
-                                        </div>
-                                    </div>
+                                    <span>{{ item.dish.name }} x {{ item.quantity }}</span>
                                 </div>
-                                <a v-if="order.status === 'COMPLETED' && !item.review"
+                                <a v-if="order.status === 'COMPLETED'"
                                    :href="'evaluate.html?orderId=' + order.id + '&dishId=' + item.dishId + '&dishName=' + encodeURIComponent(item.dish.name) + '&dishImage=' + encodeURIComponent(item.dish.imageUrl)"
                                    class="button-link primary"
                                    style="white-space: nowrap;">评价</a>
                             </div>
                         </div>
                         <div class="order-info">
-                            <div class="total">¥{{ order.totalPrice != null ? order.totalPrice.toFixed(2) : '0.00' }}</div>
+                            <div class="total">¥{{ order.totalPrice.toFixed(2) }}</div>
                             <div class="status" :class="'status-' + order.status">{{ getStatusText(order.status) }}</div>
                             <div class="order-actions">
                                 <button v-if="isCancellable(order.status)" @click="cancelOrder(order)">取消订单</button>
@@ -285,6 +289,21 @@
                 <h2 class="dish-title">{{ selectedDish.name }}</h2>
                 <p class="dish-price">¥{{ selectedDish.price.toFixed(2) }}</p>
                 <p class="dish-description">{{ selectedDish.description || '暂无详细描述。' }}</p>
+
+                <div class="reviews-section">
+                    <h3>全部评价 ({{ selectedDish.reviews ? selectedDish.reviews.length : 0 }})</h3>
+                    <div v-if="!selectedDish.reviews || selectedDish.reviews.length === 0" style="color: #888; text-align: center; padding: 20px;">暂无评价</div>
+                    <div v-else style="max-height: 200px; overflow-y: auto;">
+                        <div v-for="review in selectedDish.reviews" :key="review.id" class="review-item">
+                            <div class="review-header">
+                                <span class="review-author">{{ review.username }}</span>
+                                <span class="stars" v-html="'&#9733;'.repeat(review.rating) + '&#9734;'.repeat(5 - review.rating)"></span>
+                            </div>
+                            <p class="review-comment">{{ review.comment }}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="modal-footer" style="margin-top: 10px; padding: 0;">
                     <button class="primary" @click="addToCart(selectedDish); closeDishDetailModal();">加入购物车</button>
                 </div>
@@ -299,7 +318,7 @@
 
     createApp({
         setup() {
-            // --- States ---
+            // States
             const dishes = ref([]);
             const currentUser = ref(null);
             const showLoginModal = ref(false);
@@ -324,11 +343,17 @@
             const API_BASE_URL = '/dingcan_war_exploded/api';
             axios.defaults.withCredentials = true;
 
-            // --- Computed Properties ---
+            // Computed Properties
             const cartItemCount = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
             const cartTotalPrice = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
 
-            // --- Methods ---
+            const calculateAverageRating = (reviews) => {
+                if (!reviews || reviews.length === 0) return 0;
+                const total = reviews.reduce((sum, review) => sum + review.rating, 0);
+                return total / reviews.length;
+            };
+
+            // Methods
             const fetchDishes = async () => {
                 try {
                     const response = await axios.get(`${API_BASE_URL}/dishes/list`);
@@ -501,18 +526,6 @@
                 }
             };
 
-            const getStatusText = (status) => {
-                const map = {
-                    PENDING: "待支付", PAID: "待处理", PROCESSING: "处理中",
-                    DELIVERING: "配送中", COMPLETED: "已完成", CANCELLED: "已取消"
-                };
-                return map[status] || status;
-            };
-
-            const isCancellable = (status) => ['PAID'].includes(status);
-
-            const isDeletable = (status) => ['COMPLETED', 'CANCELLED'].includes(status);
-
             const openDishDetailModal = (dish) => {
                 selectedDish.value = dish;
                 showDishDetailModal.value = true;
@@ -524,6 +537,18 @@
                     selectedDish.value = null;
                 }, 300);
             };
+
+            const getStatusText = (status) => {
+                const map = {
+                    PENDING: "待支付", PAID: "待处理", PROCESSING: "处理中",
+                    DELIVERING: "配送中", COMPLETED: "已完成", CANCELLED: "已取消"
+                };
+                return map[status] || status;
+            };
+
+            const isCancellable = (status) => ['PAID'].includes(status);
+
+            const isDeletable = (status) => ['COMPLETED', 'CANCELLED'].includes(status);
 
             // --- 生命周期钩子 ---
             onMounted(() => {
@@ -541,7 +566,8 @@
                 showProfileModal, isEditingProfile, profileForm, profileError,
                 openProfileModal, closeProfileModal, cancelEditProfile, saveProfile,
                 deleteOrder, isDeletable,
-                showDishDetailModal, selectedDish, openDishDetailModal, closeDishDetailModal
+                showDishDetailModal, selectedDish, openDishDetailModal, closeDishDetailModal,
+                calculateAverageRating
             };
         }
     }).mount('#app');
